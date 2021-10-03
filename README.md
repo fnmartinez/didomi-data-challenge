@@ -1,110 +1,121 @@
-# Data engineering challenge
+# Didomi Challenge - Facundo Martínez
+This is the proposed solution for Didomi's Data Engineering challenge. It was built taking into account the 
+information contained in the original README.md file. 
 
-This challenge is used by Didomi for evaluating candidates for data engineering positions.
+## Installation
+The solution was created with Click, to facilitate the creation of a command line interface and simplify installation, 
+as well as deployment.  
 
-This challenge is a chance for engineers at Didomi to see how you code and organize a project to implement a specification.
+### Minimal installation
+You can install the minimum requirements to run the application by simply executing 
 
-## Deliverables
-
-The expected deliverable is a fully functional project that includes the following:
-
-- Code of the app
-- Tests of the app
-- Documentation for launching a development environment and running the app
-
-## Technical stack
-
-The application should use the following stack:
-
-- [Spark](https://spark.apache.org/)
-- Python or Scala
-
-Except for these requirements, feel free to use whichever libraries, frameworks or tools you deem necessary.
-
-## Expectations
-
-Your code will be reviewed by multiple engineers at Didomi and will serve as the base for a discussion in interviews.  
-We want to see how you approach working on a complete project and strongly recommend that you work on this challenge alone. We will particularly focus on your attention to details and expect the code to be professionally structured, commented, documented, and tested.
-
-If anything is unclear, feel free to ask any question that might help you understand the specifications or requirements better.
-
-## Delivery
-
-Your application can be sent to us as a GitHub repository (in which case you are welcome to fork this repository) or as a compressed archive containing all the deliverables.
-
-## The challenge
-
-In some specific cases, companies need to collect consent from consumers before using their data. For instance, app users might need to explicitly consent to share their geolocation before a company can use it for advertising.
-
-As users interact with the Didomi platform, we collect different types of events like:
-
-- "Page view" when a user visits a webpage
-- "Consent asked" when a user is asked for consent (ie a consent notice is displayed)
-- "Consent given" when a user gives consent (ie has clicked on a Agree or Disagree in the notice)
-
-The goal of this challenge is to build a very simple Spark app that processes events and summarizes various metrics as time-series data.
-
-[Download the example data for the challenge.](input-example.zip)
-
-## Input
-
-### Format
-
-Events are stored as JSON Lines files with the following format:
-
-```js
-{
-    "timestamp": "2020-01-21T15:19:34Z",
-    "id": "94cabac0-088c-43d3-976a-88756d21132a",
-    "type": "pageview",
-    "domain": "www.website.com",
-    "user": {
-        "id": "09fcb803-2779-4096-bcfd-0fb1afef684a",
-        "country": "US",
-        "token": "{\"vendors\":{\"enabled\":[\"vendor\"],\"disabled\":[]},\"purposes\":{\"enabled\":[\"analytics\"],\"disabled\":[]}}",
-    }
-}
+```bash
+pip install -r requirements.txt
 ```
 
-| Property       | Values                                       | Description                          |
-| -------------- | -------------------------------------------- | ------------------------------------ |
-| `timestamp`    | ISO 8601 date                                | Date of the event                    |
-| `id`           | UUID                                         | Unique event ID                      |
-| `type`         | `pageview`, `consent.given`, `consent.asked` | Event type                           |
-| `domain`       | Domain name                                  | Domain where the event was collected |
-| `user.id`      | UUID                                         | Unique user ID                       |
-| `user.token`   | JSON-String                                  | Contains status of purposes/vendors  |
-| `user.country` | ISO 3166-1 alpha-2 country code              | Country of the user                  |
+This will install the basic requirements for the application to work.
 
-### Consent status
+### Development installation
+To install it in a development environment, you can use the requirements-dev.txt file by simply running
 
-We consider an event as positive consent when at least one purpose is enabled.
+```bash
+pip install -r requirements-dev.txt
+```
 
-### Partitioning
+This will install not only the core dependencies, but also the test and development dependencies used to develop this 
+solution.
 
-The data is partitioned by date/hour with Hive partition structure.
+The creation of a virtualenv is recommended, especially for development purposes, but not mandatory. In a production or
+CI environment is not necessary.
 
-## Output
+## Execution
+Once installed, to execute the program you simply need a command line interface. If you type
 
-The Spark job is expected to compute the following metrics:
+```bash
+python -m didomi --help
+```
 
-| Metric                        | Description                                                                      |
-| ----------------------------- | -------------------------------------------------------------------------------- |
-| `pageviews`                   | Number of events of type `pageview`                                              |
-| `pageviews_with_consent`      | Number of events of type `pageview` with consent (at least one enabled purpose)  |
-| `consents_asked`              | Number of events of type `consent.asked`                                         |
-| `consents_given`              | Number of events of type `consent.given`                                         |
-| `consents_given_with_consent` | Number of events of type `consent.given` with consent                            |
-| `avg_pageviews_per_user`      | Average number of events of type `pageviews` per user                            |
+It should show the help. 
 
-The metrics should be grouped by the following dimensions:
+Since this was made with Click, help was automatically generated. Using the `--help` flag on all commands is possible, 
+and it should display their respective help alongside all the possible flags and input options.
 
-- Date and hour (YYYY-MM-DD-HH)
-- Domain
-- User country
+All the input parameters have defaults that allows the solution to be executed from the project's directory without any
+problem. So for instance, if the following command is issued
 
-## Processing
+```bash
+python -m didomi normalize
+```
 
-On top of computing the metrics listed above, the following operations must be run:
+It will execute the normalization phase, looking for the input files in the directory `input` and putting the result
+in the directory `consent`.
 
-- Deduplication of events based on event ID
+### Configuration file
+In order to be able to configure Spark's execution easily, you can pass a .ini file with the expected cluster 
+configuration through the command line by simply using the `-sc`/`--spark-config` flag like this:
+
+```bash
+python -m didomi -sc my_spark_config.ini normalize
+```
+
+This will run task-1 with the expected Spark config. 
+
+The configuration file must contain a section called `[SPARK]`. A template configuration file has been submited with 
+this code. Nevertheless, and example of a configuration file could be:
+
+```ini
+[SPARK]
+spark.app.name=my-app
+spark.master=spark://5.6.7.8:7077
+spark.executor.memory=4g
+spark.eventLog.enabled=true
+spark.serializer=org.apache.spark.serializer.KryoSerializer
+```
+
+The solution uses Python's `configparser` module to read the configuration. So all the facilities provided by that 
+module are applicable.
+
+The motivation behind using a configuration file instead of dynamically set values through the command line, is that you 
+can always dynamically create configuration files, and they can be tracked through the various processes that create 
+them. Also, they are much easier to put into version control, and to deploy than command line interface flags.
+
+## Testing
+I'm using pytest for testing, due to its extensibility and flexibility. Also, it is one of the most maintained testing 
+suites in Python. In order to execute the tests, you need to install the development dependencies. To do that, simply 
+run the next command:
+
+```bash
+pip install -r .\requirements-dev.txt
+```
+
+Afterwards, you can execute pytest directly from the project's root directory like this:
+
+```bash
+python -m pytest
+```
+
+## Considerations and motivations
+The following are considerations that were made during the solution's development as well as the motivations for some of 
+the solution's characteristics:
+
+### Command Line Interface
+It was considered that the main way to execute this solution would be by deploying it into an already existing spark 
+cluster or through a platform such as Databricks. Given this, the usage of a command line interface simplifies the 
+execution.
+
+### Output file type and fields
+The usage of Parquet as the output file type is due to its capabilities to for fast processing and extraction of 
+columnar data. Since most of the proposed queries where for summarized KPIs, I believe that doing it with parquet is
+one of the bests ways, next to using a Data Warehouse solution.
+
+The fields that are in the output file allows the execution of the queries while maintaining enough information for 
+displaying to a non-technical user. Also, the creation of derived fields directly into the file, such as the field 
+`token_vendors_enabled`, have both ideas in mind. One, to lessen the burden of later processing in order to 
+simplify the engine query plan. And second, to allow a less technical user the ability to filter and group the data 
+through the most used fields.
+
+## Possible improvements
+One possible improvement is to partition the data through the various fields that are taken into account at the time
+of slicing the data. I didn't do it, because further investigation should be applied if partitioning should be made for 
+every field that slices the data or just by some. This is because doing lots of partitioning could lead to serious 
+performance and costs issues when working with Spark in next steps.
