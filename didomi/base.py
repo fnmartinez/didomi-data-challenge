@@ -45,9 +45,13 @@ class AbstractBaseDidomiJob(ABC):
     def _filter_by_partitions(self):
         if self.input_partitions:
             self.log.info('Filtering by partitions %s', str(self.input_partitions))
+            partition_filter = None
             for partition in self.input_partitions:
-                partition_filter = self.input_data['datehour'] == self._partition_datetime_to_str(partition)
-                self.input_data = self.input_data.filter(partition_filter)
+                if partition_filter is None:
+                    partition_filter = self.input_data['datehour'] == self._partition_datetime_to_str(partition)
+                else:
+                    partition_filter = partition_filter | (self.input_data['datehour'] == self._partition_datetime_to_str(partition))
+            self.input_data = self.input_data.filter(partition_filter)
 
     def _extract(self):
         self.log.info('Extracting data from %', self.input_path)
