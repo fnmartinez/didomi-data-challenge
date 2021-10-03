@@ -1,4 +1,8 @@
 ## IDEA Stuff
 .idea/
 
+## Python Stuff
+__pycache__/
+
 ## Project Stuff
+data/
