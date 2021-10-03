@@ -4,7 +4,7 @@ from typing import Tuple
 from pyspark.sql import functions as f
 from pyspark.sql import SparkSession, DataFrame
 
-from didomi import base, schemas
+from didomi import base
 
 
 class StatsGenerator(base.AbstractBaseDidomiJob):

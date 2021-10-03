@@ -1,4 +1,4 @@
-from pyspark.sql.types import StructType, TimestampType, StringType, ArrayType, IntegerType, DoubleType
+from pyspark.sql.types import StructType, TimestampType, StringType, ArrayType, IntegerType, DoubleType, LongType
 
 raw_consent = StructType() \
     .add('datetime', TimestampType()) \
@@ -42,9 +42,9 @@ stats = StructType() \
     .add('datehour', StringType()) \
     .add('domain', StringType()) \
     .add('user_country', StringType()) \
-    .add('pageviews', IntegerType()) \
-    .add('pageviews_with_consent', IntegerType()) \
-    .add('consents_asked', IntegerType()) \
-    .add('consents_given', IntegerType()) \
-    .add('consents_given_with_consent', IntegerType()) \
+    .add('pageviews', LongType()) \
+    .add('pageviews_with_consent', LongType()) \
+    .add('consents_asked', LongType()) \
+    .add('consents_given', LongType()) \
+    .add('consents_given_with_consent', LongType()) \
     .add('avg_pageviews_per_user', DoubleType())
