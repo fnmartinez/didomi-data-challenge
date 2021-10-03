@@ -1,4 +1,5 @@
 from datetime import datetime
+from itertools import chain
 from typing import Tuple, List
 
 from pyspark.sql import functions as f
@@ -29,12 +30,15 @@ class ConsentNormalization(base.AbstractBaseDidomiJob):
     def do_extraction(self):
         self.raw_consents = self.spark.read \
             .option('basePath', self.input_path) \
-            .json(self.input_path, schema=schemas.raw_consent_schema)
+            .json(self.input_path, schema=schemas.raw_consent)
 
     def do_work(self):
         self.normalized_consents = self.raw_consents \
-            .select(flatten_schema(schemas.raw_consent_schema)) \
-            .drop_duplicates()
+            .drop_duplicates(subset=['id']) \
+            .withColumn('token', f.from_json('user.token', schemas.raw_consent_token)) \
+            .select(list(chain(flatten_schema(schemas.raw_consent),
+                               flatten_schema(schemas.raw_consent_token, 'token')))) \
+            .drop('user_token', 'token')
 
     def do_save(self):
         self.normalized_consents.write.parquet(self.output_path,
