@@ -5,6 +5,8 @@ import click
 from pyspark import SparkConf, SparkContext
 from pyspark.sql import SparkSession
 
+from didomi import etls, stats
+
 
 DEFAULT_LOGGING_PATTERN = \
     '%(asctime)s - %(name)s - %(levelname)s - %(filename)s > %(funcName)s:%(lineno)d - %(message)s'
@@ -63,3 +65,22 @@ def cli(ctx, spark_config):
     if ctx.invoked_subcommand:
         ctx.obj = ctx.with_resource(SparkResourceManager(spark_config=spark_config,
                                                          app_name=f'hellofresh.{ctx.invoked_subcommand}'))
+
+
+@cli.command('normalize')
+@click.pass_obj
+@click.option('-ip', '--input-path', type=click.Path(exists=True, dir_okay=True, file_okay=False),
+              help='Path to the directory the raw consent data is.',
+              default='./data/input')
+@click.option('-pd', '--partition-date-hour', 'input_partitions', type=click.DateTime(), multiple=True,
+              help='The partition(s) from the raw data to use for normalization. '
+                   'If not provided, then all the partition will be used')
+@click.option('-op', '--output-path', type=click.Path(exists=False, dir_okay=True, file_okay=False),
+              help='Path to the directory where the normalized consent will reside.',
+              default='./data/consents')
+def task_1(spark, input_path, input_partitions, output_path):
+    etls.ConsentNormalization(spark=spark,
+                              input_path=input_path,
+                              input_partitions=input_partitions,
+                              output_path=output_path) \
+        .execute()
