@@ -84,3 +84,22 @@ def task_1(spark, input_path, input_partitions, output_path):
                               input_partitions=input_partitions,
                               output_path=output_path) \
         .execute()
+
+
+@cli.command('stats')
+@click.pass_obj
+@click.option('-ip', '--input-path', type=click.Path(exists=True, dir_okay=True, file_okay=False),
+              help='Path to the directory where the normalized consent data is.',
+              default='./data/consents')
+@click.option('-pd', '--partition-date-hour', 'input_partitions', type=click.DateTime(), multiple=True,
+              help='The partition(s) from the normalization to use for the stats calculation. '
+                   'If not provided, then all the partition will be used')
+@click.option('-op', '--output-path', type=click.Path(exists=False, dir_okay=True, file_okay=False),
+              help='Path to the directory where the stats will reside.',
+              default='./data/stats')
+def task_2(spark, input_path, input_partitions, output_path):
+    stats.StatsGenerator(spark=spark,
+                         input_path=input_path,
+                         input_partitions=input_partitions,
+                         output_path=output_path) \
+        .execute()

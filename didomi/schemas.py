@@ -36,3 +36,15 @@ normalized_consent = StructType() \
     .add('token_purposes_enabled', ArrayType(StringType())) \
     .add('token_purposes_disabled', ArrayType(StringType())) \
     .add('datehour', StringType())
+
+
+stats = StructType() \
+    .add('datehour', StringType()) \
+    .add('domain', StringType()) \
+    .add('user_country', StringType()) \
+    .add('pageviews', IntegerType()) \
+    .add('pageviews_with_consent', IntegerType()) \
+    .add('consents_asked', IntegerType()) \
+    .add('consents_given', IntegerType()) \
+    .add('consents_given_with_consent', IntegerType()) \
+    .add('avg_pageviews_per_user', DoubleType())
